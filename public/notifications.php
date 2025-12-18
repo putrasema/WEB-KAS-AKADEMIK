@@ -1,5 +1,5 @@
 <?php
-require_once 'config/init.php';
+require_once __DIR__ . '/../src/Config/init.php';
 
 $auth->requireLogin();
 $currentUser = $auth->getCurrentUser();
@@ -99,11 +99,11 @@ if ($isAdmin) {
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <?php include 'includes/sidebar.php'; ?>
+            <?php include __DIR__ . '/../src/Includes/sidebar.php'; ?>
 
             <!-- Main Content -->
             <div class="col-md-10 col-12 p-4 main-content">
-                <?php include 'includes/mobile_header.php'; ?>
+                <?php include __DIR__ . '/../src/Includes/mobile_header.php'; ?>
                 <!-- Header -->
                 <div class="mb-4">
                     <h2 class="fw-bold mb-0">Notifikasi & Pengingat</h2>

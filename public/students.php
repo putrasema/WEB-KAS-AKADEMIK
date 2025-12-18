@@ -1,5 +1,5 @@
 <?php
-require_once 'config/init.php';
+require_once __DIR__ . '/../src/Config/init.php';
 
 $auth->requireLogin();
 $currentUser = $auth->getCurrentUser();
@@ -50,11 +50,11 @@ $students = $db->getConnection()->query("SELECT * FROM students ORDER BY created
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <?php include 'includes/sidebar.php'; ?>
+            <?php include __DIR__ . '/../src/Includes/sidebar.php'; ?>
 
             <!-- Main Content -->
             <div class="col-md-10 col-12 p-4 main-content">
-                <?php include 'includes/mobile_header.php'; ?>
+                <?php include __DIR__ . '/../src/Includes/mobile_header.php'; ?>
                 <!-- Header with Back Button -->
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div>

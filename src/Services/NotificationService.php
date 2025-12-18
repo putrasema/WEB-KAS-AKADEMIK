@@ -3,8 +3,8 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../config/email_config.php';
+// Vendor autoload is now handled in src/Config/init.php
+require_once __DIR__ . '/../Config/email_config.php';
 
 class NotificationService
 {
@@ -160,7 +160,7 @@ class NotificationService
         }
 
         // Load email template
-        $template = file_get_contents(__DIR__ . '/../includes/email_template.php');
+        $template = file_get_contents(__DIR__ . '/../Includes/email_template.php');
 
         // Replace placeholders
         $htmlBody = str_replace(

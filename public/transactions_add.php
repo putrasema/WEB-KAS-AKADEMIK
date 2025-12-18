@@ -1,39 +1,67 @@
 <?php
-require_once 'config/init.php';
+require_once __DIR__ . '/../src/Config/init.php';
 
 $auth->requireLogin();
 $currentUser = $auth->getCurrentUser();
 
-$id = $_GET['id'] ?? 0;
-
-// Fetch Transaction
-$stmt = $db->getConnection()->prepare("SELECT * FROM transactions WHERE id = ?");
-$stmt->execute([$id]);
-$transaction = $stmt->fetch();
-
-if (!$transaction) {
-    header('Location: transactions.php');
-    exit;
-}
-
-// Access Control
-if ($currentUser['role'] !== 'admin' && $transaction['created_by'] != $currentUser['id']) {
-    header('Location: transactions.php');
-    exit;
-}
-
-// Fetch helper data
+$type = $_GET['type'] ?? 'income';
 $currencies = $db->getConnection()->query("SELECT * FROM currencies")->fetchAll();
 $categories = $db->getConnection()->prepare("SELECT * FROM categories WHERE type = ?");
-$categories->execute([$transaction['type']]);
+$categories->execute([$type]);
 $categories = $categories->fetchAll();
 
 // Fetch students for dropdown
 $students = $db->getConnection()->query("SELECT id, student_id_number, full_name FROM students WHERE status = 'active' ORDER BY full_name")->fetchAll();
 
-$typeLabel = $transaction['type'] == 'income' ? 'Pemasukan' : 'Pengeluaran';
-$typeColor = $transaction['type'] == 'income' ? 'success' : 'danger';
-$typeIcon = $transaction['type'] == 'income' ? 'arrow-up-circle' : 'arrow-down-circle';
+$success = '';
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $amount = $_POST['amount'];
+    $currencyCode = $_POST['currency'];
+    $categoryId = $_POST['category_id'];
+    $description = $_POST['description'] ?? '';
+    $date = $_POST['date'];
+    $studentId = !empty($_POST['student_id']) ? $_POST['student_id'] : null;
+    $paymentMethod = $_POST['payment_method'] ?? 'cash';
+
+    // Get current rate
+    $stmt = $db->getConnection()->prepare("SELECT exchange_rate FROM currencies WHERE code = ?");
+    $stmt->execute([$currencyCode]);
+    $rate = $stmt->fetchColumn();
+
+    if ($rate) {
+        $convertedAmount = $amount * $rate;
+
+        $stmt = $db->getConnection()->prepare("INSERT INTO transactions (user_id, student_id, category_id, type, amount_original, currency_code, exchange_rate_at_time, amount_base, description, payment_method, transaction_date, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+        try {
+            $stmt->execute([
+                $currentUser['id'],
+                $studentId,
+                $categoryId,
+                $type,
+                $amount,
+                $currencyCode,
+                $rate,
+                $convertedAmount,
+                $description,
+                $paymentMethod,
+                $date,
+                $currentUser['id']
+            ]);
+            $success = "Transaksi berhasil ditambahkan!";
+        } catch (PDOException $e) {
+            $error = "Gagal menambahkan transaksi: " . $e->getMessage();
+        }
+    } else {
+        $error = "Mata uang tidak valid.";
+    }
+}
+
+$typeLabel = $type == 'income' ? 'Pemasukan' : 'Pengeluaran';
+$typeColor = $type == 'income' ? 'success' : 'danger';
+$typeIcon = $type == 'income' ? 'arrow-up-circle' : 'arrow-down-circle';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -41,7 +69,7 @@ $typeIcon = $transaction['type'] == 'income' ? 'arrow-up-circle' : 'arrow-down-c
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit <?= $typeLabel ?> - Sistem Kas Akademik</title>
+    <title>Tambah <?= $typeLabel ?> - Sistem Kas Akademik</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="assets/css/style.css">
@@ -51,53 +79,54 @@ $typeIcon = $transaction['type'] == 'income' ? 'arrow-up-circle' : 'arrow-down-c
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <?php include 'includes/sidebar.php'; ?>
+            <?php include __DIR__ . '/../src/Includes/sidebar.php'; ?>
 
             <!-- Main Content -->
             <div class="col-md-10 col-12 p-4 main-content">
-                <?php include 'includes/mobile_header.php'; ?>
+                <?php include __DIR__ . '/../src/Includes/mobile_header.php'; ?>
                 <!-- Header -->
                 <div class="mb-4">
-                    <a href="transactions.php" class="btn btn-light btn-sm mb-2">
-                        <i class="bi bi-arrow-left"></i> Kembali ke List
+                    <a href="dashboard.php" class="btn btn-light btn-sm mb-2">
+                        <i class="bi bi-arrow-left"></i> Kembali ke Dasbor
                     </a>
                     <div class="d-flex align-items-center">
                         <div class="icon-box bg-<?= $typeColor ?> text-white me-3"
                             style="width: 60px; height: 60px; font-size: 1.8rem;">
-                            <i class="bi bi-pencil-square"></i>
+                            <i class="bi bi-<?= $typeIcon ?>"></i>
                         </div>
                         <div>
-                            <h2 class="fw-bold mb-0">Edit <?= $typeLabel ?></h2>
-                            <p class="text-muted mb-0">Perbarui data transaksi</p>
+                            <h2 class="fw-bold mb-0">Tambah <?= $typeLabel ?></h2>
+                            <p class="text-muted mb-0">Catat transaksi <?= strtolower($typeLabel) ?> baru</p>
                         </div>
                     </div>
                 </div>
 
-                <?php if (isset($_SESSION['flash'])): ?>
-                    <div class="alert alert-<?= $_SESSION['flash']['type'] ?> alert-dismissible fade show shadow-sm"
-                        role="alert">
-                        <?= $_SESSION['flash']['message'] ?>
+                <?php if ($success): ?>
+                    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                        <i class="bi bi-check-circle me-2"></i><?= $success ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
-                    <?php unset($_SESSION['flash']); ?>
+                <?php endif; ?>
+                <?php if ($error): ?>
+                    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                        <i class="bi bi-exclamation-circle me-2"></i><?= $error ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
                 <?php endif; ?>
 
                 <!-- Form Card -->
                 <div class="card shadow-sm">
+                    <div class="card-header bg-<?= $typeColor ?> text-white">
+                        <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Form Transaksi <?= $typeLabel ?></h5>
+                    </div>
                     <div class="card-body p-4">
-                        <form action="transactions_action.php" method="POST">
-                            <input type="hidden" name="action" value="update">
-                            <input type="hidden" name="id" value="<?= $transaction['id'] ?>">
-
-                            <!-- Preserve logic for type and currency handling simplistically for now -->
-
+                        <form method="POST">
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-medium">
                                         <i class="bi bi-calendar3 text-primary me-1"></i>Tanggal
                                     </label>
-                                    <input type="date" name="transaction_date" class="form-control"
-                                        value="<?= date('Y-m-d', strtotime($transaction['transaction_date'])) ?>"
+                                    <input type="date" name="date" class="form-control" value="<?= date('Y-m-d') ?>"
                                         required>
                                 </div>
                                 <div class="col-md-6">
@@ -107,8 +136,30 @@ $typeIcon = $transaction['type'] == 'income' ? 'arrow-up-circle' : 'arrow-down-c
                                     <select name="category_id" class="form-select" required>
                                         <option value="">Pilih Kategori</option>
                                         <?php foreach ($categories as $c): ?>
-                                            <option value="<?= $c['id'] ?>" <?= $c['id'] == $transaction['category_id'] ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($c['name']) ?>
+                                            <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-2">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">
+                                        <i class="bi bi-cash-stack text-primary me-1"></i>Jumlah
+                                    </label>
+                                    <input type="number" step="0.01" name="amount" id="amount" class="form-control"
+                                        placeholder="0.00" required oninput="updateConversion()">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">
+                                        <i class="bi bi-currency-exchange text-primary me-1"></i>Mata Uang
+                                    </label>
+                                    <select name="currency" id="currency" class="form-select" required
+                                        onchange="updateConversion()">
+                                        <?php foreach ($currencies as $c): ?>
+                                            <option value="<?= $c['code'] ?>" data-rate="<?= $c['exchange_rate'] ?>"
+                                                <?= $c['code'] == 'IDR' ? 'selected' : '' ?>>
+                                                <?= $c['code'] ?> - <?= $c['name'] ?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
@@ -117,40 +168,13 @@ $typeIcon = $transaction['type'] == 'income' ? 'arrow-up-circle' : 'arrow-down-c
 
                             <div class="mt-3">
                                 <label class="form-label fw-medium">
-                                    <i class="bi bi-card-text text-primary me-1"></i>Deskripsi
+                                    <i class="bi bi-credit-card text-primary me-1"></i>Metode Pembayaran
                                 </label>
-                                <input type="text" name="description" class="form-control"
-                                    value="<?= htmlspecialchars($transaction['description']) ?>" required>
-                            </div>
-
-                            <div class="row g-3 mt-2">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">
-                                        <i class="bi bi-cash-stack text-primary me-1"></i>Jumlah
-                                        (<?= $transaction['currency_code'] ?>)
-                                    </label>
-                                    <input type="number" step="0.01" name="amount" id="amount" class="form-control"
-                                        value="<?= $transaction['amount_original'] ?>" required
-                                        oninput="updateConversion()">
-                                    <input type="hidden" id="rate" value="<?= $transaction['exchange_rate_at_time'] ?>">
-                                    <small class="text-muted">Rate saat transaksi:
-                                        <?= number_format($transaction['exchange_rate_at_time'], 2) ?></small>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">
-                                        <i class="bi bi-credit-card text-primary me-1"></i>Metode Pembayaran
-                                    </label>
-                                    <select name="payment_method" class="form-select" required>
-                                        <?php
-                                        $methods = ['cash' => 'Tunai (Cash)', 'bank_transfer' => 'Transfer Bank', 'e_wallet' => 'E-Wallet'];
-                                        foreach ($methods as $val => $label):
-                                            ?>
-                                            <option value="<?= $val ?>" <?= $val == $transaction['payment_method'] ? 'selected' : '' ?>>
-                                                <?= $label ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
+                                <select name="payment_method" class="form-select" required>
+                                    <option value="cash">Tunai (Cash)</option>
+                                    <option value="bank_transfer">Transfer Bank</option>
+                                    <option value="e_wallet">E-Wallet</option>
+                                </select>
                             </div>
 
                             <?php if ($currentUser['role'] === 'admin' || $type === 'income'): ?>
@@ -161,10 +185,8 @@ $typeIcon = $transaction['type'] == 'income' ? 'arrow-up-circle' : 'arrow-down-c
                                     <select name="student_id" class="form-select">
                                         <option value="">Pilih Mahasiswa/i</option>
                                         <?php foreach ($students as $s): ?>
-                                            <option value="<?= $s['id'] ?>" <?= $s['id'] == $transaction['student_id'] ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($s['full_name']) ?>
-                                                (<?= htmlspecialchars($s['student_id_number']) ?>)
-                                            </option>
+                                            <option value="<?= $s['id'] ?>"><?= htmlspecialchars($s['full_name']) ?>
+                                                (<?= htmlspecialchars($s['student_id_number']) ?>)</option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
@@ -175,7 +197,8 @@ $typeIcon = $transaction['type'] == 'income' ? 'arrow-up-circle' : 'arrow-down-c
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <small class="text-muted d-block mb-1">Estimasi Konversi (IDR)</small>
+                                                <small class="text-muted d-block mb-1">Estimasi Konversi ke Rupiah
+                                                    (IDR)</small>
                                                 <h4 id="converted_preview" class="mb-0 text-primary fw-bold">Rp 0,00
                                                 </h4>
                                             </div>
@@ -186,11 +209,11 @@ $typeIcon = $transaction['type'] == 'income' ? 'arrow-up-circle' : 'arrow-down-c
                             </div>
 
                             <div class="mt-4 d-flex gap-2">
-                                <button type="submit" class="btn btn-primary btn-lg flex-fill shadow-sm">
-                                    <i class="bi bi-save me-2"></i>Simpan Perubahan
+                                <button type="submit" class="btn btn-<?= $typeColor ?> btn-lg flex-fill shadow-sm">
+                                    <i class="bi bi-check-circle me-2"></i>Simpan Transaksi
                                 </button>
-                                <a href="transactions.php" class="btn btn-light btn-lg">
-                                    Batal
+                                <a href="dashboard.php" class="btn btn-light btn-lg">
+                                    <i class="bi bi-x-circle"></i>
                                 </a>
                             </div>
                         </form>
@@ -203,7 +226,8 @@ $typeIcon = $transaction['type'] == 'income' ? 'arrow-up-circle' : 'arrow-down-c
     <script>
         function updateConversion() {
             const amount = parseFloat(document.getElementById('amount').value) || 0;
-            const rate = parseFloat(document.getElementById('rate').value);
+            const currencySelect = document.getElementById('currency');
+            const rate = parseFloat(currencySelect.options[currencySelect.selectedIndex].dataset.rate);
             const converted = amount * rate;
 
             const formatter = new Intl.NumberFormat('id-ID', {
@@ -212,6 +236,8 @@ $typeIcon = $transaction['type'] == 'income' ? 'arrow-up-circle' : 'arrow-down-c
             });
             document.getElementById('converted_preview').textContent = formatter.format(converted);
         }
+
+        // Initialize on load
         updateConversion();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

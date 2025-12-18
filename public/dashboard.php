@@ -1,5 +1,5 @@
 <?php
-require_once 'config/init.php';
+require_once __DIR__ . '/../src/Config/init.php';
 
 $auth->requireLogin();
 $currentUser = $auth->getCurrentUser();

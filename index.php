@@ -1,9 +1,7 @@
 <?php
-require_once 'config/init.php';
-
-if ($auth->isLoggedIn()) {
-    header("Location: dashboard.php");
-} else {
-    header("Location: home.php");
-}
+/**
+ * Project: Academic Cash System
+ * Root redirection to public entry point.
+ */
+header("Location: public/index.php");
 exit();

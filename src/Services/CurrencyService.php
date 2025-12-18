@@ -18,7 +18,7 @@ class CurrencyService
      * @param int $days Number of days to look back
      * @return array Array of dates and rates, or empty array on failure
      */
-    private $cacheFile = __DIR__ . '/../cache/currency_data.json';
+    private $cacheFile = __DIR__ . '/../../cache/currency_data.json';
 
     /**
      * Fetch historical trend data for a currency pair.

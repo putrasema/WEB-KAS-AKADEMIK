@@ -41,11 +41,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <?php include 'includes/sidebar.php'; ?>
+            <?php include __DIR__ . '/../src/Includes/sidebar.php'; ?>
 
             <!-- Main Content -->
             <div class="col-md-10 col-12 p-4 main-content">
-                <?php include 'includes/mobile_header.php'; ?>
+                <?php include __DIR__ . '/../src/Includes/mobile_header.php'; ?>
                 <div style="max-width: 600px; margin: 0 auto;">
                     <h1 class="mb-4">Add Student</h1>
 

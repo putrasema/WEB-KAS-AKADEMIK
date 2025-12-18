@@ -1,5 +1,5 @@
 <?php
-require_once 'config/init.php';
+require_once __DIR__ . '/../src/Config/init.php';
 
 // Set timezone to Asia/Jakarta (WIB)
 date_default_timezone_set('Asia/Jakarta');
@@ -118,11 +118,11 @@ $isRateUp = $rateChange >= 0;
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <?php include 'includes/sidebar.php'; ?>
+            <?php include __DIR__ . '/../src/Includes/sidebar.php'; ?>
 
             <!-- Main Content -->
             <div class="col-md-10 col-12 p-4 main-content">
-                <?php include 'includes/mobile_header.php'; ?>
+                <?php include __DIR__ . '/../src/Includes/mobile_header.php'; ?>
                 <!-- Admin Header -->
                 <div class="admin-header">
                     <div class="d-flex justify-content-between align-items-center">

@@ -1,5 +1,5 @@
 <?php
-require_once 'config/init.php';
+require_once __DIR__ . '/../src/Config/init.php';
 
 echo "<!DOCTYPE html><html><head><title>Database Migration</title><style>body{font-family:sans-serif;padding:20px;max-width:800px;margin:0 auto;line-height:1.6}.success{color:green;background:#d4edda;padding:10px;border-radius:5px;margin:5px 0}.error{color:721c24;background:#f8d7da;padding:10px;border-radius:5px;margin:5px 0}</style></head><body>";
 echo "<h2>🛠️ Database Migration Tool</h2>";

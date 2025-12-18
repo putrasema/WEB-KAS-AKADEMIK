@@ -4,7 +4,7 @@
  * Jalankan file ini via terminal/CMD
  */
 
-require_once 'config/init.php';
+require_once __DIR__ . '/../src/Config/init.php';
 
 echo "===========================================\n";
 echo "  UBAH PASSWORD USER MANUAL  \n";

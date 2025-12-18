@@ -1,5 +1,5 @@
 <?php
-require_once 'config/init.php';
+require_once __DIR__ . '/../src/Config/init.php';
 
 // If already logged in, we should logout first to allow password reset
 // This prevents the "redirect to dashboard" issue when testing

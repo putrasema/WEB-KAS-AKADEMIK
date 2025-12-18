@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../config/init.php';
+require_once __DIR__ . '/../../src/Config/init.php';
 
 header('Content-Type: application/json');
 
@@ -24,8 +24,7 @@ if ($currentUser['role'] !== 'admin') {
 $action = $_POST['action'] ?? '';
 $studentId = $_POST['student_id'] ?? null;
 
-// Initialize NotificationService
-require_once __DIR__ . '/../classes/NotificationService.php';
+// NotificationService is loaded via autoloader in init.php
 $notificationService = new NotificationService();
 
 // Get category and month info
