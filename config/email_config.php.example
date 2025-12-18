@@ -1,0 +1,45 @@
+<?php
+/**
+ * Email Configuration for Gmail SMTP - EXAMPLE
+ * 
+ * CARA SETUP:
+ * 1. Copy file ini dan rename menjadi 'email_config.php' (hapus .example)
+ * 2. Ganti nilai di bawah dengan kredensial Gmail Anda
+ * 3. Pastikan sudah generate App Password dari Google
+ */
+
+// Gmail SMTP Configuration
+define('SMTP_HOST', 'smtp.gmail.com');
+define('SMTP_PORT', 587); // 587 untuk TLS, 465 untuk SSL
+define('SMTP_SECURE', 'tls'); // 'tls' atau 'ssl'
+define('SMTP_AUTH', true);
+
+// Gmail Account Credentials
+// GANTI dengan email dan App Password Anda
+define('SMTP_USERNAME', 'contoh@gmail.com'); // ← GANTI dengan email Gmail Anda
+define('SMTP_PASSWORD', 'abcd efgh ijkl mnop'); // ← GANTI dengan App Password (16 karakter)
+
+// Sender Information
+define('SMTP_FROM_EMAIL', 'contoh@gmail.com'); // ← GANTI (sama dengan SMTP_USERNAME)
+define('SMTP_FROM_NAME', 'Sistem Kas Akademik'); // Nama pengirim (bisa diubah)
+
+// Email Settings
+define('EMAIL_CHARSET', 'UTF-8');
+define('EMAIL_DEBUG', 0); // 0 = off, 1 = client, 2 = server (untuk debugging)
+
+/*
+ * CARA MENDAPATKAN APP PASSWORD:
+ * 
+ * 1. Buka: https://myaccount.google.com/security
+ * 2. Aktifkan "2-Step Verification" jika belum aktif
+ * 3. Buka: https://myaccount.google.com/apppasswords
+ * 4. Pilih "Mail" → "Other (Custom name)" → Ketik "Academic Cash System"
+ * 5. Klik "Generate"
+ * 6. SALIN password 16 digit yang muncul (format: xxxx xxxx xxxx xxxx)
+ * 7. Paste di SMTP_PASSWORD di atas (bisa dengan atau tanpa spasi)
+ * 
+ * PENTING:
+ * - Jangan gunakan password Gmail biasa!
+ * - Harus menggunakan App Password
+ * - 2-Step Verification HARUS aktif
+ */
