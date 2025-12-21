@@ -1,8 +1,8 @@
 # Academic Cash System (Sistem Kas Akademik)
 
-Sistem Kas Akademik adalah aplikasi berbasis web yang dirancang untuk mengelola keuangan (kas/SPP) mahasiswa secara efisien, transparan, dan otomatis. Aplikasi ini menggabungkan manajemen transaksi dengan fitur analitik keuangan dan integrasi notifikasi real-time.
+Sistem Kas Akademik adalah aplikasi berbasis web yang dirancang untuk mengelola keuangan kas mahasiswa secara efisien, transparan, dan otomatis. Aplikasi ini menggabungkan manajemen transaksi dengan fitur analitik keuangan dan integrasi notifikasi real-time.
 
-## 🚀 Fitur Utama
+##  Fitur Utama
 
 ### 1. Manajemen Keuangan & Transaksi
 - **Pencatatan Pemasukan & Pengeluaran**: Sistem entry data yang mudah untuk mencatat setiap transaksi kas atau SPP.
@@ -25,11 +25,11 @@ Sistem Kas Akademik adalah aplikasi berbasis web yang dirancang untuk mengelola 
 
 ---
 
-## 💻 Detail Teknologi (Tech Stack)
+##  Detail Teknologi (Tech Stack)
 
 Aplikasi ini dibangun menggunakan pendekatan **Native PHP** dengan struktur kode yang modular dan berorientasi objek (OOP), tanpa menggunakan framework backend berat, untuk memastikan performa ringan dan kemudahan deployment.
 
-### 🎨 Frontend (Antarmuka Pengguna)
+###  Frontend (Antarmuka Pengguna)
 - **HTML5 & CSS3**: Struktur semantik dan styling modern.
 - **Bootstrap 5.3**: Framework CSS untuk desain yang responsif (mobile-friendly), sistem grid, dan komponen UI (Modal, Card, Alert).
 - **JavaScript (Vanilla & ES6)**: Logika interaksi sisi klien.
@@ -46,14 +46,14 @@ Aplikasi ini dibangun menggunakan pendekatan **Native PHP** dengan struktur kode
     - **Views**: Menangani tampilan output (`public/*.php`).
 - **Composer**: Manajer dependensi untuk mengelola library pihak ketiga.
 
-### 📚 Library & Integrasi Pihak Ketiga
+###  Library & Integrasi Pihak Ketiga
 - **PHPMailer**: Untuk pengiriman email transaksional yang aman dan andal.
 - **vlucas/phpdotenv**: Untuk mengelola variabel lingkungan (environment variables) sensitif secara aman.
 - **Frankfurter API**: API publik untuk mendapatkan data kurs mata uang asing secara real-time.
 
 ---
 
-## 📁 Struktur Direktori
+##  Struktur Direktori
 
 ```bash
 academic_cash_system/
@@ -72,7 +72,7 @@ academic_cash_system/
 
 ---
 
-## 🛠 Instalasi & Cara Menjalankan
+##  Instalasi & Cara Menjalankan
 
 ### Prasyarat
 - Web Server (Apache/Nginx) atau XAMPP/Laragon.
@@ -116,9 +116,4 @@ academic_cash_system/
    - Buka browser dan akses: `http://localhost:8000`
 
 ---
-
-## 👥 Kontributor
-- **Fairu** - *Initial Work & Development*
-
----
-*Dibuat dengan ❤️ untuk kemudahan administrasi akademik.*
+*Dibuat dengan untuk kemudahan administrasi akademik.*
