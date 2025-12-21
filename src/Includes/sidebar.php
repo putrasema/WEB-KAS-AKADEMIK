@@ -40,9 +40,11 @@
         <a href="transactions.php" class="<?= strpos($currentPage, 'transactions') !== false ? 'active' : '' ?>">
             <i class="bi bi-arrow-left-right"></i> Transaksi
         </a>
-        <a href="students.php" class="<?= $currentPage == 'students.php' ? 'active' : '' ?>">
-            <i class="bi bi-people-fill"></i> Mahasiswa/i
-        </a>
+        <?php if ($isAdmin): ?>
+            <a href="students.php" class="<?= $currentPage == 'students.php' ? 'active' : '' ?>">
+                <i class="bi bi-people-fill"></i> Mahasiswa/i
+            </a>
+        <?php endif; ?>
         <a href="analytics.php" class="<?= $currentPage == 'analytics.php' ? 'active' : '' ?>">
             <i class="bi bi-graph-up-arrow"></i> Analitik
         </a>
@@ -68,8 +70,7 @@
             <span>Mode Tampilan</span>
             <i class="bi bi-moon-stars-fill theme-icon"></i>
         </button>
-        <a href="logout.php"
-            class="btn btn-danger w-100 d-flex justify-content-center align-items-center text-white"
+        <a href="logout.php" class="btn btn-danger w-100 d-flex justify-content-center align-items-center text-white"
             style="border-radius: 12px;">
             <i class="bi bi-box-arrow-right me-2"></i> Keluar
         </a>

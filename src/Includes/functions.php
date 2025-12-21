@@ -1,12 +1,12 @@
 <?php
-// includes/functions.php
+
 
 /**
  * Format number to currency string
  */
 function formatMoney($amount, $currencyCode = 'IDR')
 {
-    // Simple formatting, can be enhanced with NumberFormatter
+
     if ($currencyCode === 'IDR') {
         return 'Rp ' . number_format($amount, 0, ',', '.');
     } elseif ($currencyCode === 'USD') {
@@ -37,9 +37,9 @@ function convertToBase($amount, $currencyCode, $pdo)
     $currency = $stmt->fetch();
 
     if ($currency) {
-        // If currency is IDR (Base), rate is 1. 
-        // If USD is 15000, it means 1 USD = 15000 IDR.
-        // So Amount (USD) * Rate = Amount (IDR)
+
+
+
         return $amount * $currency['exchange_rate'];
     }
     return $amount;
@@ -51,13 +51,7 @@ function convertToBase($amount, $currencyCode, $pdo)
  */
 function updateExchangeRates($pdo)
 {
-    // API Key would go here
-    // $apiKey = 'YOUR_API_KEY';
-    // $url = "https://v6.exchangerate-api.com/v6/{$apiKey}/latest/IDR";
 
-    // Mocking update for demonstration
-    // 1 USD = 15500 IDR
-    // 1 EUR = 16800 IDR
 
     $rates = [
         'USD' => 15500,

@@ -33,13 +33,13 @@ class CurrencyService
         $startDate = date('Y-m-d', strtotime("-{$days} days"));
         $endDate = date('Y-m-d');
 
-        // Ensure cache directory exists
+
         if (!is_dir(dirname($this->cacheFile))) {
             mkdir(dirname($this->cacheFile), 0777, true);
         }
 
-        // Try to read from cache first
-        $cacheKey = "{$from}_{$to}_{$days}_{$endDate}"; // Key includes today's date
+
+        $cacheKey = "{$from}_{$to}_{$days}_{$endDate}";
         if (file_exists($this->cacheFile)) {
             $cacheContent = json_decode(file_get_contents($this->cacheFile), true);
             if (isset($cacheContent['key']) && $cacheContent['key'] === $cacheKey && isset($cacheContent['data'])) {
@@ -47,7 +47,7 @@ class CurrencyService
             }
         }
 
-        // If not in cache or expired, fetch from API
+
         $url = "{$this->baseUrl}/{$startDate}..{$endDate}?from={$from}&to={$to}";
 
         $ch = curl_init();
@@ -62,7 +62,7 @@ class CurrencyService
             $data = json_decode($response, true);
             if (isset($data['rates'])) {
                 $trend = [];
-                // Sort by date to ensure correct order
+
                 ksort($data['rates']);
 
                 foreach ($data['rates'] as $date => $rates) {
@@ -74,15 +74,12 @@ class CurrencyService
                     }
                 }
 
-                // Append caching "today" even if API doesn't have it yet? 
-                // No, better to trust API. But to make graph "current", we can carry forward the last rate if today is missing (e.g. weekend)
-                // However, user specifically asked to "change date to now". 
-                // Let's add a logic: if the last date from API < today, add today with the same rate (shim for weekend).
+
                 if (!empty($trend)) {
                     $lastItem = end($trend);
                     $lastDate = $lastItem['date'];
                     if ($lastDate < $endDate) {
-                        // Fill in missing days up to today (simple carry forward)
+
                         $current = strtotime($lastDate);
                         $endTimestamp = strtotime($endDate);
                         while ($current < $endTimestamp) {
@@ -97,7 +94,7 @@ class CurrencyService
                     }
                 }
 
-                // Save to cache
+
                 file_put_contents($this->cacheFile, json_encode([
                     'key' => $cacheKey,
                     'timestamp' => time(),
@@ -108,7 +105,7 @@ class CurrencyService
             }
         }
 
-        // Fallback: Use old cache if API fails?
+
         return [];
     }
 }

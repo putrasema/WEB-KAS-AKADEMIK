@@ -4,7 +4,7 @@ require_once __DIR__ . '/../src/Config/init.php';
 $auth->requireLogin();
 $currentUser = $auth->getCurrentUser();
 
-// Access control: only admin can edit
+
 if ($currentUser['role'] !== 'admin') {
     header("Location: students.php");
     exit();
@@ -16,7 +16,7 @@ if (!$id) {
     exit();
 }
 
-// Fetch student data
+
 $stmt = $db->getConnection()->prepare("SELECT * FROM students WHERE id = ?");
 $stmt->execute([$id]);
 $student = $stmt->fetch();
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if ($stmt->execute([$student_id_number, $full_name, $email, $phone, $status, $id])) {
             $success = "Data mahasiswa berhasil diperbarui!";
-            // Refresh data
+
             $stmt = $db->getConnection()->prepare("SELECT * FROM students WHERE id = ?");
             $stmt->execute([$id]);
             $student = $stmt->fetch();

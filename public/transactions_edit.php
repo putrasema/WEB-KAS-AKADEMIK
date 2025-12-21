@@ -6,7 +6,7 @@ $currentUser = $auth->getCurrentUser();
 
 $id = $_GET['id'] ?? 0;
 
-// Fetch Transaction
+
 $stmt = $db->getConnection()->prepare("SELECT * FROM transactions WHERE id = ?");
 $stmt->execute([$id]);
 $transaction = $stmt->fetch();
@@ -16,19 +16,19 @@ if (!$transaction) {
     exit;
 }
 
-// Access Control
-if ($currentUser['role'] !== 'admin' && $transaction['created_by'] != $currentUser['id']) {
+
+if ($currentUser['role'] === 'student' || ($currentUser['role'] !== 'admin' && $transaction['created_by'] != $currentUser['id'])) {
     header('Location: transactions.php');
     exit;
 }
 
-// Fetch helper data
+
 $currencies = $db->getConnection()->query("SELECT * FROM currencies")->fetchAll();
 $categories = $db->getConnection()->prepare("SELECT * FROM categories WHERE type = ?");
 $categories->execute([$transaction['type']]);
 $categories = $categories->fetchAll();
 
-// Fetch students for dropdown
+
 $students = $db->getConnection()->query("SELECT id, student_id_number, full_name FROM students WHERE status = 'active' ORDER BY full_name")->fetchAll();
 
 $typeLabel = $transaction['type'] == 'income' ? 'Pemasukan' : 'Pengeluaran';

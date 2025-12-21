@@ -4,27 +4,61 @@ require_once __DIR__ . '/../src/Config/init.php';
 $auth->requireLogin();
 $currentUser = $auth->getCurrentUser();
 
-// Pagination
+
 $page = $_GET['page'] ?? 1;
 $limit = 10;
 $offset = ($page - 1) * $limit;
 
-// Fetch Transactions
-$stmt = $db->getConnection()->prepare("
+
+$whereClause = "";
+$params = [];
+
+if ($currentUser['role'] === 'student') {
+
+    $stmtStudent = $db->getConnection()->prepare("SELECT id FROM students WHERE full_name = ?");
+    $stmtStudent->execute([$currentUser['full_name']]);
+    $studentId = $stmtStudent->fetchColumn();
+
+    if ($studentId) {
+
+        $whereClause = "WHERE t.student_id = ?";
+        $params = [$studentId];
+    } else {
+
+        $whereClause = "WHERE t.created_by = ?";
+        $params = [$currentUser['id']];
+    }
+}
+
+
+$sql = "
     SELECT t.*, c.name as category_name, s.full_name as student_name
     FROM transactions t 
     LEFT JOIN categories c ON t.category_id = c.id 
     LEFT JOIN students s ON t.student_id = s.id
+    $whereClause
     ORDER BY t.transaction_date DESC 
     LIMIT ? OFFSET ?
-");
-$stmt->bindValue(1, $limit, PDO::PARAM_INT);
-$stmt->bindValue(2, $offset, PDO::PARAM_INT);
+";
+
+$stmt = $db->getConnection()->prepare($sql);
+$paramIndex = 1;
+foreach ($params as $param) {
+    $stmt->bindValue($paramIndex++, $param);
+}
+$stmt->bindValue($paramIndex++, $limit, PDO::PARAM_INT);
+$stmt->bindValue($paramIndex++, $offset, PDO::PARAM_INT);
 $stmt->execute();
 $transactions = $stmt->fetchAll();
 
-// Count total for pagination
-$total = $db->getConnection()->query("SELECT COUNT(*) FROM transactions")->fetchColumn();
+$countSql = "SELECT COUNT(*) FROM transactions t $whereClause";
+$stmtCount = $db->getConnection()->prepare($countSql);
+$paramIndex = 1;
+foreach ($params as $param) {
+    $stmtCount->bindValue($paramIndex++, $param);
+}
+$stmtCount->execute();
+$total = $stmtCount->fetchColumn();
 $totalPages = ceil($total / $limit);
 ?>
 <!DOCTYPE html>
@@ -90,7 +124,9 @@ $totalPages = ceil($total / $limit);
                                         <th>Jumlah Asli</th>
                                         <th>Jumlah (IDR)</th>
                                         <th>Tipe</th>
-                                        <th class="text-center pe-4">Aksi</th>
+                                        <?php if ($currentUser['role'] !== 'student'): ?>
+                                            <th class="text-center pe-4">Aksi</th>
+                                        <?php endif; ?>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -150,21 +186,23 @@ $totalPages = ceil($total / $limit);
                                                     <?= ucfirst($t['type']) ?>
                                                 </span>
                                             </td>
-                                            <td class="text-center pe-4">
-                                                <a href="transactions_edit.php?id=<?= $t['id'] ?>"
-                                                    class="btn btn-sm btn-outline-primary" title="Edit">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                                <form action="transactions_action.php" method="POST" class="d-inline"
-                                                    onsubmit="return confirm('Apakah Anda yakin ingin menghapus transaksi ini?');">
-                                                    <input type="hidden" name="action" value="delete">
-                                                    <input type="hidden" name="id" value="<?= $t['id'] ?>">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger ms-1"
-                                                        title="Hapus">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </td>
+                                            <?php if ($currentUser['role'] !== 'student'): ?>
+                                                <td class="text-center pe-4">
+                                                    <a href="transactions_edit.php?id=<?= $t['id'] ?>"
+                                                        class="btn btn-sm btn-outline-primary" title="Edit">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <form action="transactions_action.php" method="POST" class="d-inline"
+                                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus transaksi ini?');">
+                                                        <input type="hidden" name="action" value="delete">
+                                                        <input type="hidden" name="id" value="<?= $t['id'] ?>">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger ms-1"
+                                                            title="Hapus">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            <?php endif; ?>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>

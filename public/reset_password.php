@@ -1,10 +1,8 @@
 <?php
 require_once __DIR__ . '/../src/Config/init.php';
 
-// If already logged in, we should logout first to allow password reset
-// This prevents the "redirect to dashboard" issue when testing
 if ($auth->isLoggedIn()) {
-    $auth->logout(); 
+    $auth->logout();
 }
 
 $message = '';
@@ -12,27 +10,27 @@ $messageType = '';
 $validToken = false;
 $token = $_GET['token'] ?? '';
 
-// Check if token is provided and valid
+
 if (!empty($token)) {
     $db = Database::getInstance()->getConnection();
 
-    // 1. Find user with this token (ignore expiration for now)
+
     $stmt = $db->prepare("SELECT * FROM users WHERE reset_token = ?");
     $stmt->execute([$token]);
     $user = $stmt->fetch();
 
     if ($user) {
-        // 2. Check expiration in PHP to ensure timezone consistency
+
         $expiresAt = strtotime($user['reset_token_expires']);
         $now = time();
-        
+
         if ($now <= $expiresAt) {
             $validToken = true;
         } else {
-            // Token expired
+
             $diff = $now - $expiresAt;
-            $message = "Link reset password sudah kadaluarsa " . ceil($diff/60) . " menit yang lalu.<br>" .
-                       "<small class='text-muted'>Server Time: " . date('H:i', $now) . " | Expires: " . date('H:i', $expiresAt) . "</small>";
+            $message = "Link reset password sudah kadaluarsa " . ceil($diff / 60) . " menit yang lalu.<br>" .
+                "<small class='text-muted'>Server Time: " . date('H:i', $now) . " | Expires: " . date('H:i', $expiresAt) . "</small>";
             $messageType = 'danger';
         }
     } else {
@@ -41,7 +39,7 @@ if (!empty($token)) {
     }
 }
 
-// Handle password reset form submission
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
     $password = $_POST['password'];
     $confirmPassword = $_POST['confirm_password'];
@@ -56,14 +54,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
         $message = 'Password minimal 6 karakter';
         $messageType = 'danger';
     } else {
-        // Hash new password
+
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-        // Update password and clear reset token
+
         $stmt = $db->prepare("UPDATE users SET password = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?");
         $stmt->execute([$hashedPassword, $user['id']]);
 
-        // Redirect to login with success message
+
         $_SESSION['reset_success'] = true;
         header("Location: login.php");
         exit();
@@ -164,7 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
     </div>
 
     <script>
-        // Client-side password match validation
+
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.querySelector('form');
             if (form) {

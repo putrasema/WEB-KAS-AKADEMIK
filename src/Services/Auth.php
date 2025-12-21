@@ -12,14 +12,14 @@ class Auth
         }
     }
 
-    public function register($username, $password, $fullName, $role = 'student')
+    public function register($username, $password, $fullName, $email, $role = 'student')
     {
         $hash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $this->db->prepare("INSERT INTO users (username, password, full_name, role) VALUES (?, ?, ?, ?)");
+        $stmt = $this->db->prepare("INSERT INTO users (username, password, full_name, email, role) VALUES (?, ?, ?, ?, ?)");
         try {
-            return $stmt->execute([$username, $hash, $fullName, $role]);
+            return $stmt->execute([$username, $hash, $fullName, $email, $role]);
         } catch (PDOException $e) {
-            return false; // Likely duplicate username
+            return false;
         }
     }
 

@@ -2,11 +2,12 @@
 require_once __DIR__ . '/../src/Config/init.php';
 
 $auth->requireLogin();
+$currentUser = $auth->getCurrentUser();
 
 $breakdown = $analytics->getCategoryBreakdown('expense');
 $advice = $analytics->getSavingsAdvice();
 
-// Prepare data for charts
+
 $labels = [];
 $data = [];
 foreach ($breakdown as $item) {
@@ -14,7 +15,7 @@ foreach ($breakdown as $item) {
     $data[] = $item['total'];
 }
 
-// Get all-time data
+
 $totalIncome = $analytics->getTotalIncome();
 $totalExpense = $analytics->getTotalExpense();
 ?>

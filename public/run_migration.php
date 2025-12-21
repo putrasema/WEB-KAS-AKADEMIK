@@ -12,7 +12,7 @@ function runQuery($db, $sql, $message)
         $db->exec($sql);
         echo "<div class='success'>✅ $message</div>";
     } catch (PDOException $e) {
-        // Ignor error if column already exists (Duplicate column name)
+
         if (strpos($e->getMessage(), "Duplicate column name") !== false) {
             echo "<div class='success'>ℹ️ $message (Already exists)</div>";
         } else {
@@ -21,19 +21,19 @@ function runQuery($db, $sql, $message)
     }
 }
 
-// 1. Add email column
+
 $sql1 = "ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(100) DEFAULT NULL AFTER full_name";
 $sql2 = "ALTER TABLE users ADD UNIQUE KEY IF NOT EXISTS email (email)";
 runQuery($db, $sql1, "Menambahkan kolom 'email'");
 runQuery($db, $sql2, "Menambahkan index unik untuk email");
 
-// 2. Add reset_token columns
+
 $sql3 = "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(100) DEFAULT NULL AFTER email";
 $sql4 = "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires DATETIME DEFAULT NULL AFTER reset_token";
 runQuery($db, $sql3, "Menambahkan kolom 'reset_token'");
 runQuery($db, $sql4, "Menambahkan kolom 'reset_token_expires'");
 
-// 3. Update Admin Email
+
 $sql5 = "UPDATE users SET email = 'keisyaaurora325@gmail.com' WHERE username = 'admin'";
 runQuery($db, $sql5, "Set email admin ke: keisyaaurora325@gmail.com");
 

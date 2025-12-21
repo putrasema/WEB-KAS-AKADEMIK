@@ -1,8 +1,7 @@
-/* assets/css/style.css */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    /* Light Mode (Default) */
+
     --primary-color: #4361ee;
     --secondary-color: #3f37c9;
     --success-color: #4cc9f0;
@@ -57,19 +56,148 @@
     --modal-text: #f8fafc;
 }
 
+/* Auth Pages Styling */
+.auth-bg {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 2rem 1rem;
+}
+
+[data-theme="dark"] .auth-bg {
+    background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+}
+
+.auth-card {
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 3rem 2.5rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--card-border);
+    width: 100%;
+    max-width: 480px;
+    transition: transform 0.3s ease;
+}
+
+.auth-card:hover {
+    transform: translateY(-5px);
+}
+
+.auth-card .icon-box {
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 20px rgba(67, 97, 238, 0.2);
+}
+
+/* Precision Input Styling */
+.input-group {
+    background-color: var(--input-bg);
+    border-radius: 12px;
+    border: 1px solid var(--input-border);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.input-group:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    background-color: var(--card-bg);
+}
+
+.input-group-text {
+    background-color: transparent !important;
+    border: none !important;
+    padding-left: 1.2rem;
+    padding-right: 0.5rem;
+    color: var(--text-muted);
+}
+
+.input-group .form-control {
+    background-color: transparent !important;
+    border: none !important;
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+    padding-left: 0.5rem;
+    font-weight: 500;
+}
+
+.input-group .form-control:focus {
+    box-shadow: none !important;
+}
+
+
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .hero-section {
+        padding-top: 100px;
+        text-align: center;
+    }
+
+    .hero-content h1 {
+        font-size: 2.5rem;
+    }
+
+    .hero-image-wrapper {
+        margin-top: 3rem;
+    }
+
+    .d-flex.gap-5 {
+        justify-content: center;
+        gap: 2rem !important;
+    }
+}
+
 body {
     background-color: var(--body-bg);
     font-family: 'Outfit', sans-serif;
     color: var(--text-color);
     transition: background-color 0.3s ease, color 0.3s ease;
+    overflow-x: hidden;
+    /* Prevent horizontal scroll */
+}
+
+/* Navbar Styling */
+.navbar-landing {
+    padding: 1.5rem 0;
+    transition: all 0.3s ease;
+    background: transparent;
+}
+
+.navbar-landing.scrolled {
+    padding: 0.8rem 0;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="dark"] .navbar-landing.scrolled {
+    background: rgba(15, 23, 42, 0.95) !important;
+}
+
+.navbar-brand {
+    font-size: 1.35rem;
+    letter-spacing: -0.5px;
+}
+
+/* Hero Section */
+.hero-section {
+    position: relative;
+    padding-top: 140px;
+    /* Space for fixed navbar */
+    padding-bottom: 80px;
+    min-height: 100vh;
+    background: radial-gradient(circle at top right, rgba(67, 97, 238, 0.05), transparent 40%),
+        radial-gradient(circle at bottom left, rgba(76, 201, 240, 0.05), transparent 40%);
+    overflow: hidden;
 }
 
 /* Sidebar */
-.sidebar {
-    min-height: 100vh;
-    background: linear-gradient(180deg, var(--sidebar-bg-from) 0%, var(--sidebar-bg-to) 100%);
-    color: var(--sidebar-text);
-    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+min-height: 100vh;
+background: linear-gradient(180deg, var(--sidebar-bg-from) 0%, var(--sidebar-bg-to) 100%);
+color: var(--sidebar-text);
+box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar .brand {

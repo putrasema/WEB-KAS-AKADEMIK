@@ -1,38 +1,90 @@
 <?php
 require_once __DIR__ . '/../src/Config/init.php';
 
-// Set timezone to Asia/Jakarta (WIB)
+
 date_default_timezone_set('Asia/Jakarta');
 
 
 $auth->requireLogin();
 $currentUser = $auth->getCurrentUser();
 
-// Access Control: Allow everyone to see this dashboard layout (Global Stats & Currency)
-// if ($currentUser['role'] !== 'admin') { ... } // Removed restricted access
 
-// Get Admin Statistics
+
+
+$currentMonth = date('m');
+$currentYear = date('Y');
+
+
+$stmtSettings = $db->getConnection()->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('monthly_spp_amount', 'spp_deadline_day')");
+$stmtSettings->execute();
+$dbSettings = $stmtSettings->fetchAll(PDO::FETCH_KEY_PAIR);
+
+$deadlineDay = $dbSettings['spp_deadline_day'] ?? 10;
+$monthlyFeeAmount = $dbSettings['monthly_spp_amount'] ?? 30000;
+
+$paymentStatus = 'unpaid';
+$hasStudentId = false;
+$studentId = null;
+
+
+$stmtCat = $db->getConnection()->prepare("SELECT id FROM categories WHERE name IN ('KAS-BULAN', 'SPP') ORDER BY FIELD(name, 'KAS-BULAN', 'SPP') LIMIT 1");
+$stmtCat->execute();
+$sppCategoryId = $stmtCat->fetchColumn();
+
+
+$listWhereClause = "";
+$listParams = [];
+
+if ($currentUser['role'] === 'student') {
+
+    $stmtStudent = $db->getConnection()->prepare("SELECT id FROM students WHERE full_name = ?");
+    $stmtStudent->execute([$currentUser['full_name']]);
+    $studentId = $stmtStudent->fetchColumn();
+
+    if ($studentId) {
+        $listWhereClause = "WHERE t.student_id = ?";
+        $listParams = [$studentId];
+        
+
+        if ($sppCategoryId) {
+            $hasStudentId = true;
+            $sqlCheck = "SELECT COUNT(*) FROM transactions WHERE student_id = ? AND category_id = ? AND MONTH(transaction_date) = ? AND YEAR(transaction_date) = ?";
+            $stmtCheck = $db->getConnection()->prepare($sqlCheck);
+            $stmtCheck->execute([$studentId, $sppCategoryId, $currentMonth, $currentYear]);
+            if ($stmtCheck->fetchColumn() > 0) {
+                $paymentStatus = 'paid';
+            }
+        }
+    } else {
+        $listWhereClause = "WHERE t.created_by = ?";
+        $listParams = [$currentUser['id']];
+    }
+}
+
+
 $monthlyIncome = $analytics->getMonthlyIncome(date('m'), date('Y'));
 $monthlyExpense = $analytics->getMonthlyExpense(date('m'), date('Y'));
 
-// Calculate total balance (all time)
+
 $totalIncomeAllTime = $analytics->getTotalIncome();
 $totalExpenseAllTime = $analytics->getTotalExpense();
 $balance = $totalIncomeAllTime - $totalExpenseAllTime;
 
-// Assign monthly values to variables used in view (Modified to use All Time as requested)
 $totalIncome = $totalIncomeAllTime;
 $totalExpense = $totalExpenseAllTime;
 
-// Get total users
+
 $totalUsers = $db->getConnection()->query("SELECT COUNT(*) as count FROM users")->fetch()['count'];
 $totalStudents = $db->getConnection()->query("SELECT COUNT(*) as count FROM students WHERE status = 'active'")->fetch()['count'];
 $totalTransactions = $db->getConnection()->query("SELECT COUNT(*) as count FROM transactions")->fetch()['count'];
 
-// Recent transactions
-$recentTransactions = $db->getConnection()->query("SELECT t.*, c.name as category_name, s.full_name as student_name, u.full_name as user_name FROM transactions t LEFT JOIN categories c ON t.category_id = c.id LEFT JOIN students s ON t.student_id = s.id LEFT JOIN users u ON t.created_by = u.id ORDER BY t.created_at DESC LIMIT 8")->fetchAll();
 
-// Get monthly data for chart (last 6 months)
+$sqlRecent = "SELECT t.*, c.name as category_name, s.full_name as student_name, u.full_name as user_name FROM transactions t LEFT JOIN categories c ON t.category_id = c.id LEFT JOIN students s ON t.student_id = s.id LEFT JOIN users u ON t.created_by = u.id $listWhereClause ORDER BY t.transaction_date DESC LIMIT 8";
+$stmtRecent = $db->getConnection()->prepare($sqlRecent);
+$stmtRecent->execute($listParams);
+$recentTransactions = $stmtRecent->fetchAll();
+
+
 $monthlyData = [];
 for ($i = 5; $i >= 0; $i--) {
     $month = date('m', strtotime("-$i months"));
@@ -44,9 +96,9 @@ for ($i = 5; $i >= 0; $i--) {
     ];
 }
 
-// Get currency trend
-$currencyRange = isset($_GET['currency_range']) ? (int) $_GET['currency_range'] : 30; // Default 30 days
-$currencySource = isset($_GET['currency_source']) ? $_GET['currency_source'] : 'USD'; // Default USD
+
+$currencyRange = isset($_GET['currency_range']) ? (int) $_GET['currency_range'] : 30;
+$currencySource = isset($_GET['currency_source']) ? $_GET['currency_source'] : 'USD';
 $validSources = ['USD' => 'Dolar Amerika Serikat', 'EUR' => 'Euro'];
 if (!array_key_exists($currencySource, $validSources)) {
     $currencySource = 'USD';
@@ -54,7 +106,7 @@ if (!array_key_exists($currencySource, $validSources)) {
 
 $currencyTrend = $currencyService->getTrend($currencySource, 'IDR', $currencyRange);
 
-// Get current rate (last item in trend)
+
 $currentRate = !empty($currencyTrend) ? end($currencyTrend)['rate'] : 0;
 $previousRate = !empty($currencyTrend) && count($currencyTrend) > 1 ? $currencyTrend[count($currencyTrend) - 2]['rate'] : $currentRate;
 $rateChange = $currentRate - $previousRate;
@@ -148,6 +200,40 @@ $isRateUp = $rateChange >= 0;
                         </div>
                     </div>
                 </div>
+
+                <!-- Payment Reminder (FOR STUDENTS) -->
+                <?php if ($currentUser['role'] === 'student' && $hasStudentId): ?>
+                    <div class="mb-4">
+                        <?php if ($paymentStatus === 'paid'): ?>
+                            <div class="alert alert-success border-0 shadow-sm d-flex align-items-center p-3 mb-0" style="border-radius: 15px; background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                                <div class="icon-box bg-success text-white me-3" style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="bi bi-check-circle-fill fs-4"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-1">Pembayaran Kas Lunas!</h6>
+                                    <p class="small mb-0 opacity-75">Terima kasih, Anda sudah membayar uang kas bulan <strong><?= date('F') ?></strong>.</p>
+                                </div>
+                                <div class="text-end ms-3">
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 px-3 py-2">Terbayar: <?= formatCurrency($monthlyFeeAmount, 'IDR') ?></span>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center p-3 mb-0" style="border-radius: 15px; background: linear-gradient(135deg, #ff4d4d 0%, #d63031 100%); color: white;">
+                                <div class="icon-box bg-white text-danger me-3" style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="bi bi-exclamation-circle-fill fs-4"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-1" style="color: white !important;">Menunggu Pembayaran Kas</h6>
+                                    <p class="small mb-0 opacity-100">Anda belum membayar uang kas bulan <strong><?= date('F') ?></strong> sebesar <strong><?= formatCurrency($monthlyFeeAmount, 'IDR') ?></strong>.</p>
+                                    <p class="small mb-0 opacity-75">Tenggat waktu: <span class="badge bg-white text-danger"><?= $deadlineDay ?> <?= date('M Y') ?></span></p>
+                                </div>
+                                <a href="transactions_add.php?type=income" class="btn btn-light btn-sm ms-3 fw-bold shadow-sm">
+                                    Bayar Sekarang
+                                </a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
 
                 <!-- Stats Cards -->
                 <div class="row mb-4 g-4">
@@ -321,10 +407,7 @@ $isRateUp = $rateChange >= 0;
                                         </h1>
                                         <div class="mt-2">
                                             <?php
-                                            $changeColor = $rateChange >= 0 ? '#8ab4f8' : '#f28b82'; // Blue for up, Red for down (Google Finance style)
-                                            // Actually Google Finance uses Red for negative and Green for positive usually, but let's stick to standard or user image.
-                                            // User image has Red graph, so likely rate dropped or it's just the style.
-                                            // Let's use Red (#f28b82) for down and Green (#81c995) for up.
+                                            $changeColor = $rateChange >= 0 ? '#8ab4f8' : '#f28b82';
                                             $trendColor = $isRateUp ? '#81c995' : '#f28b82';
                                             $trendIcon = $isRateUp ? '+' : '';
                                             ?>
@@ -380,8 +463,8 @@ $isRateUp = $rateChange >= 0;
                                     <div class="d-flex justify-content-end mb-3 gap-1">
                                         <?php
                                         $ranges = [
-                                            // 1 => '1HR', // Not available
-                                            // 5 => '5HR', // Not available
+                                            // 1 => '1HR', 
+                                            // 5 => '5HR',
                                             30 => '1BLN',
                                             180 => '6BLN',
                                             365 => '1TH',
@@ -459,7 +542,7 @@ $isRateUp = $rateChange >= 0;
     </div>
 
     <script>
-        // Financial Chart
+
         const ctx = document.getElementById('financialChart').getContext('2d');
         new Chart(ctx, {
             type: 'line',
@@ -502,14 +585,14 @@ $isRateUp = $rateChange >= 0;
             }
         });
 
-        // Currency Chart
+
         const currencyCtx = document.getElementById('currencyChart').getContext('2d');
         const currentRate = <?= $currentRate ?>;
         const inputSource = document.getElementById('inputSource');
         const inputTarget = document.getElementById('inputTarget');
         const isRateUp = <?= $isRateUp ? 'true' : 'false' ?>;
 
-        // Helper to format number
+
         const formatIDR = (num) => {
             return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(num);
         };
@@ -517,7 +600,7 @@ $isRateUp = $rateChange >= 0;
             return parseFloat(str.replace(/\./g, '').replace(',', '.'));
         };
 
-        // Live Conversion
+
         inputSource.addEventListener('input', function (e) {
             const val = parseFloat(e.target.value);
             if (!isNaN(val)) {
@@ -531,19 +614,16 @@ $isRateUp = $rateChange >= 0;
             const val = parseIDR(e.target.value);
             if (!isNaN(val)) {
                 inputSource.value = (val / currentRate).toFixed(4);
-                // Reformat target to look nice
+
                 e.target.value = formatIDR(val);
             }
         });
 
-        // Gradient & Colors
-        // Using redish color from image for the line if it's main theme, or green/red based on trend.
-        // Image shows Red line.
-        const lineColor = isRateUp ? '#81c995' : '#f28b82'; // Green or Red
+        const lineColor = isRateUp ? '#81c995' : '#f28b82';
 
         let gradient = currencyCtx.createLinearGradient(0, 0, 0, 400);
         gradient.addColorStop(0, isRateUp ? 'rgba(129, 201, 149, 0.2)' : 'rgba(242, 139, 130, 0.2)');
-        gradient.addColorStop(1, 'rgba(32, 33, 36, 0)');   // Fade to dark bg
+        gradient.addColorStop(1, 'rgba(32, 33, 36, 0)');
 
         const currencyData = {
             labels: <?= json_encode(array_column($currencyTrend ?? [], 'date')) ?>,
@@ -553,12 +633,12 @@ $isRateUp = $rateChange >= 0;
                 borderColor: lineColor,
                 backgroundColor: gradient,
                 borderWidth: 2,
-                pointRadius: 0, // Hide points by default
+                pointRadius: 0,
                 pointHoverRadius: 6,
                 pointHoverBackgroundColor: lineColor,
                 pointHoverBorderColor: '#fff',
                 pointHoverBorderWidth: 2,
-                tension: 0, // Sharp lines
+                tension: 0,
                 fill: true
             }]
         };
@@ -575,7 +655,7 @@ $isRateUp = $rateChange >= 0;
                 },
                 plugins: {
                     legend: {
-                        display: false // Hide legend
+                        display: false
                     },
                     tooltip: {
                         backgroundColor: '#3c4043',
@@ -595,7 +675,7 @@ $isRateUp = $rateChange >= 0;
                 scales: {
                     x: {
                         grid: {
-                            display: false, // Hide x grid
+                            display: false,
                             drawBorder: false
                         },
                         ticks: {
@@ -604,9 +684,9 @@ $isRateUp = $rateChange >= 0;
                         }
                     },
                     y: {
-                        position: 'right', // Axis on right
+                        position: 'right',
                         grid: {
-                            color: '#3c4043', // Subtle grid lines
+                            color: '#3c4043',
                             borderDash: [5, 5],
                             drawBorder: false
                         },

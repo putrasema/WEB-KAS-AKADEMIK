@@ -5,12 +5,12 @@ $auth->requireLogin();
 $currentUser = $auth->getCurrentUser();
 $isAdmin = $currentUser['role'] === 'admin';
 
-// Get Current Month and Year
+
 $currentMonth = date('m');
 $currentYear = date('Y');
 $monthName = date('F');
 
-// Get Monthly Fee Category ID (Prioritize 'KAS-BULAN', then 'SPP')
+
 $stmt = $db->getConnection()->prepare("SELECT id, name FROM categories WHERE name IN ('KAS-BULAN', 'SPP') ORDER BY FIELD(name, 'KAS-BULAN', 'SPP') LIMIT 1");
 $stmt->execute();
 $sppCategory = $stmt->fetch();
@@ -18,11 +18,20 @@ $sppCategoryId = $sppCategory ? $sppCategory['id'] : null;
 $sppCategoryName = $sppCategory ? $sppCategory['name'] : 'Money Kas';
 
 $unpaidStudents = [];
-$userPaymentStatus = 'unpaid'; // Default
+$userPaymentStatus = 'unpaid';
 $lastPaymentDate = null;
+$deadlineDay = 10;
+$studentId = null;
+
+if (!$isAdmin) {
+
+    $stmtStudent = $db->getConnection()->prepare("SELECT id FROM students WHERE full_name = ?");
+    $stmtStudent->execute([$currentUser['full_name']]);
+    $studentId = $stmtStudent->fetchColumn();
+}
 
 if ($isAdmin) {
-    // Admin Logic: Find students who haven't paid SPP this month
+
     if ($sppCategoryId) {
         $sql = "
             SELECT s.*, s.phone, s.email 
@@ -43,20 +52,19 @@ if ($isAdmin) {
         $unpaidStudents = $stmt->fetchAll();
     }
 } else {
-    // User Logic: Check if current user has paid
-    // Ideally user is linked to student, but for now check by user_id
-    if ($sppCategoryId) {
+
+    if ($sppCategoryId && $studentId) {
         $sql = "
             SELECT transaction_date 
             FROM transactions 
-            WHERE user_id = ? 
+            WHERE student_id = ? 
             AND category_id = ? 
             AND MONTH(transaction_date) = ? 
             AND YEAR(transaction_date) = ?
             LIMIT 1
         ";
         $stmt = $db->getConnection()->prepare($sql);
-        $stmt->execute([$currentUser['id'], $sppCategoryId, $currentMonth, $currentYear]);
+        $stmt->execute([$studentId, $sppCategoryId, $currentMonth, $currentYear]);
         $payment = $stmt->fetch();
 
         if ($payment) {
@@ -192,16 +200,28 @@ if ($isAdmin) {
                             </div>
                         </div>
                     <?php else: ?>
-                        <div class="card shadow-sm border-danger">
-                            <div class="card-body text-center py-5">
-                                <i class="bi bi-exclamation-circle text-danger mb-3" style="font-size: 3rem;"></i>
-                                <h3 class="fw-bold text-danger">Peringatan Pembayaran</h3>
-                                <p class="lead mb-4">Anda belum membayar uang kas untuk bulan
+                        <div class="card shadow-sm border-0" style="border-radius: 20px; overflow: hidden;">
+                            <div class="card-body text-center py-5 bg-light">
+                                <div class="mb-4">
+                                    <div class="icon-box bg-danger text-white mx-auto shadow"
+                                        style="width: 80px; height: 80px; font-size: 2.5rem;">
+                                        <i class="bi bi-clock-history"></i>
+                                    </div>
+                                </div>
+                                <h3 class="fw-bold text-dark">Peringatan Pembayaran</h3>
+                                <p class="lead mb-2">Anda belum membayar uang kas untuk bulan
                                     <strong><?= $monthName ?></strong>.
                                 </p>
-                                <a href="transactions_add.php?type=income" class="btn btn-danger btn-lg px-5 shadow">
-                                    <i class="bi bi-wallet2 me-2"></i> Bayar Sekarang
-                                </a>
+                                <div class="badge bg-danger-subtle text-danger px-3 py-2 mb-4 fs-6 rounded-pill">
+                                    <i class="bi bi-calendar-event me-2"></i>Tenggat Waktu: <?= $deadlineDay ?>
+                                    <?= $monthName ?>         <?= $currentYear ?>
+                                </div>
+                                <div class="d-grid gap-2 col-md-6 mx-auto">
+                                    <a href="transactions_add.php?type=income"
+                                        class="btn btn-danger btn-lg px-5 shadow rounded-pill">
+                                        <i class="bi bi-wallet2 me-2"></i> Bayar Sekarang (Rp 30.000)
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -213,7 +233,7 @@ if ($isAdmin) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Send single email
+
         document.querySelectorAll('.send-email-btn').forEach(button => {
             button.addEventListener('click', function () {
                 const studentId = this.getAttribute('data-student-id');
@@ -224,11 +244,11 @@ if ($isAdmin) {
                     return;
                 }
 
-                // Show loading
+
                 this.disabled = true;
                 this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Mengirim...';
 
-                // Send AJAX request
+
                 const formData = new FormData();
                 formData.append('action', 'send_single');
                 formData.append('student_id', studentId);
@@ -258,7 +278,7 @@ if ($isAdmin) {
             });
         });
 
-        // Send bulk email
+
         document.getElementById('sendBulkEmail')?.addEventListener('click', function () {
             const totalStudents = document.querySelectorAll('.send-email-btn').length;
 
@@ -281,7 +301,7 @@ if ($isAdmin) {
                 .then(data => {
                     if (data.success) {
                         alert('✅ ' + data.message);
-                        location.reload(); // Reload to update button states
+                        location.reload();
                     } else {
                         alert('❌ ' + data.message);
                         this.disabled = false;

@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../src/Config/init.php';
 
-// If user is already logged in, redirect to dashboard
+
 if ($auth->isLoggedIn()) {
     header("Location: dashboard.php");
     exit();
@@ -27,7 +27,8 @@ if ($auth->isLoggedIn()) {
                 <div class="icon-box bg-primary text-white me-2" style="width: 40px; height: 40px; font-size: 1.2rem;">
                     <i class="bi bi-wallet2"></i>
                 </div>
-                <span class="fw-bold text-dark">Sistem Uang Kas</span>
+                <span class="fw-bold text-dark d-none d-sm-block">Sistem Uang Kas</span>
+                <span class="fw-bold text-dark d-block d-sm-none">Kas Akademik</span>
             </a>
             <button class="navbar-toggler p-0 border-0" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarNav">
@@ -177,7 +178,7 @@ if ($auth->isLoggedIn()) {
     </section>
 
     <!-- Call to Action -->
-    <section class="py-5 bg-gradient-brand text-white text-center">
+    <section class="py-5 bg-gradient-primary text-white text-center">
         <div class="container py-5">
             <h2 class="display-6 fw-bold mb-4">Siap Mengelola Kas dengan Lebih Baik?</h2>
             <p class="lead mb-5 opacity-90 mx-auto" style="max-width: 600px;">Bergabunglah dengan ribuan siswa dan
@@ -213,8 +214,9 @@ if ($auth->isLoggedIn()) {
                 <div class="col-lg-3">
                     <h6 class="fw-bold mb-3 text-uppercase small text-secondary dropdown-header">Kontak</h6>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none"><i
-                                    class="bi bi-envelope me-2"></i> admin@akademiksistem.ac.id</a></li>
+                        <li class="mb-2"><a href="mailto:admin@akademiksistem.ac.id"
+                                class="text-white-50 text-decoration-none"><i class="bi bi-envelope me-2"></i>
+                                admin@akademiksistem.ac.id</a></li>
                         <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none"><i
                                     class="bi bi-whatsapp me-2"></i> - </a></li>
                     </ul>
@@ -229,7 +231,7 @@ if ($auth->isLoggedIn()) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Navbar scroll effect
+
         window.addEventListener('scroll', function () {
             if (window.scrollY > 50) {
                 document.querySelector('.navbar').classList.add('scrolled', 'shadow-sm', 'bg-white');

@@ -7,10 +7,11 @@ class Database
 
     private function __construct()
     {
-        $host = 'localhost';
-        $db = 'academic_cash_db';
-        $user = 'root';
-        $pass = '';
+
+        $host = $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? getenv('DB_HOST') ?: 'localhost';
+        $db = $_ENV['DB_NAME'] ?? $_SERVER['DB_NAME'] ?? getenv('DB_NAME') ?: 'academic_cash_db';
+        $user = $_ENV['DB_USER'] ?? $_SERVER['DB_USER'] ?? getenv('DB_USER') ?: 'root';
+        $pass = $_ENV['DB_PASS'] ?? $_SERVER['DB_PASS'] ?? getenv('DB_PASS') ?: '';
         $charset = 'utf8mb4';
 
         $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -23,7 +24,9 @@ class Database
         try {
             $this->pdo = new PDO($dsn, $user, $pass, $options);
         } catch (\PDOException $e) {
-            throw new \PDOException($e->getMessage(), (int) $e->getCode());
+
+            error_log("Database connection failed: " . $e->getMessage());
+            throw new \PDOException("Database connection error. Please check your .env file.", (int) $e->getCode());
         }
     }
 

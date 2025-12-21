@@ -5,7 +5,12 @@ $auth->requireLogin();
 $currentUser = $auth->getCurrentUser();
 $isAdmin = ($currentUser['role'] === 'admin');
 
-// Handle Add/Edit/Delete
+if (!$isAdmin) {
+    header("Location: user_dashboard.php");
+    exit;
+}
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$isAdmin) {
         $error = "Akses ditolak. Hanya admin yang dapat melakukan tindakan ini.";

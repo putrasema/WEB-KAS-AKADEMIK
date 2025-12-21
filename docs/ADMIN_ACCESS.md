@@ -153,8 +153,8 @@ Edit file `classes/Database.php` dan sesuaikan kredensial:
 ```php
 $host = 'localhost';
 $db = 'academic_cash_db';
-$user = 'root';  // Ganti jika berbeda
-$pass = '';      // Isi jika ada password
+$user = 'root';  
+$pass = '';      
 ```
 
 ---

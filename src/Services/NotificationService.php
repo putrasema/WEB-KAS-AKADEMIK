@@ -3,7 +3,7 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Vendor autoload is now handled in src/Config/init.php
+
 require_once __DIR__ . '/../Config/email_config.php';
 
 class NotificationService
@@ -27,7 +27,7 @@ class NotificationService
      */
     public function sendEmail($userId, $toEmail, $toName, $subject, $htmlBody)
     {
-        // Validate email configuration
+
         if (!$this->isEmailConfigured()) {
             $errorMsg = "⚠️ Konfigurasi email belum diatur!\n\n" .
                 "Silakan update file config/email_config.php dengan:\n" .
@@ -46,7 +46,7 @@ class NotificationService
         $mail = new PHPMailer(true);
 
         try {
-            // Server settings
+
             $mail->isSMTP();
             $mail->Host = SMTP_HOST;
             $mail->SMTPAuth = SMTP_AUTH;
@@ -60,20 +60,20 @@ class NotificationService
                 $mail->SMTPDebug = EMAIL_DEBUG;
             }
 
-            // Recipients
+
             $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
             $mail->addAddress($toEmail, $toName);
             $mail->addReplyTo(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
 
-            // Content
+
             $mail->isHTML(true);
             $mail->Subject = $subject;
             $mail->Body = $htmlBody;
-            $mail->AltBody = strip_tags($htmlBody); // Plain text version
+            $mail->AltBody = strip_tags($htmlBody);
 
             $mail->send();
 
-            // Log successful email
+
             $this->logNotification($userId, $subject, 'Email sent to: ' . $toEmail, 'email', 'sent');
 
             return [
@@ -82,10 +82,10 @@ class NotificationService
             ];
 
         } catch (Exception $e) {
-            // Log failed email with detailed error
+
             $errorMsg = "Email gagal dikirim.\n\n";
 
-            // Provide helpful error messages
+
             if (strpos($mail->ErrorInfo, 'authenticate') !== false) {
                 $errorMsg .= "❌ SMTP Authentication Error\n\n" .
                     "Kemungkinan penyebab:\n" .
@@ -117,7 +117,7 @@ class NotificationService
      */
     private function isEmailConfigured()
     {
-        // Check if configuration has been updated from default placeholders
+
         $placeholderValues = [
             'your-email@gmail.com',
             'your-app-password-here',
@@ -132,7 +132,7 @@ class NotificationService
             return false;
         }
 
-        // Check if email is valid format
+
         if (!filter_var(SMTP_USERNAME, FILTER_VALIDATE_EMAIL)) {
             return false;
         }
@@ -151,7 +151,7 @@ class NotificationService
      */
     public function sendPaymentReminder($studentData, $categoryName, $monthYear, $paymentLink = '')
     {
-        // Check if student has email
+
         if (empty($studentData['email'])) {
             return [
                 'success' => false,
@@ -159,10 +159,10 @@ class NotificationService
             ];
         }
 
-        // Load email template
+
         $template = file_get_contents(__DIR__ . '/../Includes/email_template.php');
 
-        // Replace placeholders
+
         $htmlBody = str_replace(
             ['{{STUDENT_NAME}}', '{{STUDENT_NIM}}', '{{CATEGORY_NAME}}', '{{MONTH_YEAR}}', '{{PAYMENT_LINK}}', '{{CURRENT_YEAR}}'],
             [
@@ -178,7 +178,7 @@ class NotificationService
 
         $subject = "Pengingat Pembayaran {$categoryName} - {$monthYear}";
 
-        // Get user_id (if exists, otherwise use 0 for system)
+
         $userId = $studentData['user_id'] ?? 0;
 
         return $this->sendEmail(
@@ -200,7 +200,7 @@ class NotificationService
      */
     public function sendPasswordResetEmail($userData, $resetToken, $resetLink)
     {
-        // Check if user has email
+
         if (empty($userData['email'])) {
             return [
                 'success' => false,
@@ -208,7 +208,7 @@ class NotificationService
             ];
         }
 
-        // Create HTML email body
+
         $htmlBody = '
         <!DOCTYPE html>
         <html lang="id">
@@ -373,7 +373,7 @@ class NotificationService
 
     public function sendWebPush($userId, $title, $message)
     {
-        // Placeholder for VAPID/Web Push logic
+
         $this->logNotification($userId, $title, $message, 'web_push', 'pending');
         return true;
     }

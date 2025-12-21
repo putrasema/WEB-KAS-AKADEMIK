@@ -10,8 +10,22 @@ $categories = $db->getConnection()->prepare("SELECT * FROM categories WHERE type
 $categories->execute([$type]);
 $categories = $categories->fetchAll();
 
-// Fetch students for dropdown
+
+if ($currentUser['role'] === 'student' && $type === 'expense') {
+    header("Location: user_dashboard.php");
+    exit;
+}
+
+
 $students = $db->getConnection()->query("SELECT id, student_id_number, full_name FROM students WHERE status = 'active' ORDER BY full_name")->fetchAll();
+
+
+$currentStudent = null;
+if ($currentUser['role'] === 'student') {
+    $stmtStudent = $db->getConnection()->prepare("SELECT * FROM students WHERE full_name = ?");
+    $stmtStudent->execute([$currentUser['full_name']]);
+    $currentStudent = $stmtStudent->fetch();
+}
 
 $success = '';
 $error = '';
@@ -25,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $studentId = !empty($_POST['student_id']) ? $_POST['student_id'] : null;
     $paymentMethod = $_POST['payment_method'] ?? 'cash';
 
-    // Get current rate
+
     $stmt = $db->getConnection()->prepare("SELECT exchange_rate FROM currencies WHERE code = ?");
     $stmt->execute([$currencyCode]);
     $rate = $stmt->fetchColumn();
@@ -148,7 +162,8 @@ $typeIcon = $type == 'income' ? 'arrow-up-circle' : 'arrow-down-circle';
                                         <i class="bi bi-cash-stack text-primary me-1"></i>Jumlah
                                     </label>
                                     <input type="number" step="0.01" name="amount" id="amount" class="form-control"
-                                        placeholder="0.00" required oninput="updateConversion()">
+                                        placeholder="0.00" value="<?= $type == 'income' ? '30000' : '' ?>" required
+                                        oninput="updateConversion()">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-medium">
@@ -177,7 +192,7 @@ $typeIcon = $type == 'income' ? 'arrow-up-circle' : 'arrow-down-circle';
                                 </select>
                             </div>
 
-                            <?php if ($currentUser['role'] === 'admin' || $type === 'income'): ?>
+                            <?php if ($currentUser['role'] === 'admin'): ?>
                                 <div class="mt-3">
                                     <label class="form-label fw-medium">
                                         <i class="bi bi-person text-primary me-1"></i>Mahasiswa/i (Opsional)
@@ -189,6 +204,23 @@ $typeIcon = $type == 'income' ? 'arrow-up-circle' : 'arrow-down-circle';
                                                 (<?= htmlspecialchars($s['student_id_number']) ?>)</option>
                                         <?php endforeach; ?>
                                     </select>
+                                </div>
+                            <?php elseif ($type === 'income' && $currentStudent): ?>
+                                <div class="mt-3">
+                                    <label class="form-label fw-medium">
+                                        <i class="bi bi-person text-primary me-1"></i>Mahasiswa/i
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="bi bi-person-check text-success"></i>
+                                        </span>
+                                        <input type="text" class="form-control bg-light border-start-0"
+                                            value="<?= htmlspecialchars($currentStudent['full_name']) ?> (<?= htmlspecialchars($currentStudent['student_id_number']) ?>)"
+                                            readonly>
+                                    </div>
+                                    <input type="hidden" name="student_id" value="<?= $currentStudent['id'] ?>">
+                                    <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle me-1"></i>Pemasukan
+                                        ini akan otomatis dicatat atas nama Anda.</small>
                                 </div>
                             <?php endif; ?>
 
@@ -225,7 +257,8 @@ $typeIcon = $type == 'income' ? 'arrow-up-circle' : 'arrow-down-circle';
 
     <script>
         function updateConversion() {
-            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            const amountInput = document.getElementById('amount');
+            const amount = parseFloat(amountInput.value) || 0;
             const currencySelect = document.getElementById('currency');
             const rate = parseFloat(currencySelect.options[currencySelect.selectedIndex].dataset.rate);
             const converted = amount * rate;
@@ -237,7 +270,30 @@ $typeIcon = $type == 'income' ? 'arrow-up-circle' : 'arrow-down-circle';
             document.getElementById('converted_preview').textContent = formatter.format(converted);
         }
 
-        // Initialize on load
+
+        const isIncome = '<?= $type ?>' === 'income';
+        const targetAmountIDR = 30000;
+
+        document.getElementById('currency').addEventListener('change', function () {
+            if (isIncome) {
+                const currency = this.value;
+                const rate = parseFloat(this.options[this.selectedIndex].dataset.rate);
+
+                if (currency === 'USD') {
+                    document.getElementById('amount').value = '1.81';
+                } else if (currency === 'EUR') {
+                    document.getElementById('amount').value = '1.56';
+                } else if (currency === 'IDR') {
+                    document.getElementById('amount').value = '30000';
+                } else if (rate > 0) {
+                    const requiredAmount = targetAmountIDR / rate;
+                    document.getElementById('amount').value = requiredAmount.toFixed(2);
+                }
+                updateConversion();
+            }
+        });
+
+
         updateConversion();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

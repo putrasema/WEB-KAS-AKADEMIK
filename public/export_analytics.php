@@ -4,22 +4,22 @@ require_once __DIR__ . '/../src/Config/init.php';
 $auth->requireLogin();
 $currentUser = $auth->getCurrentUser();
 
-// Only allow admin to export
+
 if ($currentUser['role'] !== 'admin') {
     die("Akses Ditolak: Hanya admin yang dapat mengunduh laporan.");
 }
 
-// Define filename
+
 $filename = "laporan_keuangan_ska_" . date('Y-m-d') . ".csv";
 
-// Set Data Headers
+
 header('Content-Type: text/csv');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 
-// Open PHP output stream
+
 $output = fopen('php://output', 'w');
 
-// Add CSV Header Row
+
 fputcsv($output, [
     'ID Transaksi',
     'Tanggal',
@@ -34,8 +34,8 @@ fputcsv($output, [
     'Dibuat Oleh'
 ]);
 
-// Fetch All Transactions (or filtered if we added filters later, for now All)
-// Join with categories and users/students for better readability
+
+
 $sql = "
     SELECT 
         t.id, 

@@ -5,7 +5,7 @@
 
 const ThemeManager = {
     init: function() {
-        // Check local storage or system preference
+
         const savedTheme = localStorage.getItem('theme');
         const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         
@@ -15,7 +15,7 @@ const ThemeManager = {
             this.setTheme('light');
         }
 
-        // Add event listener to toggle button if it exists
+
         const toggler = document.getElementById('theme-toggle');
         if (toggler) {
             toggler.addEventListener('click', () => {
@@ -23,7 +23,7 @@ const ThemeManager = {
             });
         }
         
-        // Also mobile toggle if different
+
         const mobileToggler = document.getElementById('theme-toggle-mobile');
         if (mobileToggler) {
             mobileToggler.addEventListener('click', () => {
@@ -58,7 +58,7 @@ const ThemeManager = {
     }
 };
 
-// Initialize on load
+
 document.addEventListener('DOMContentLoaded', () => {
     ThemeManager.init();
 });

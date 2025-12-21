@@ -1,0 +1,5 @@
+# Disable directory browsing
+Options -Indexes
+
+# Set default document
+DirectoryIndex index.php public/index.php

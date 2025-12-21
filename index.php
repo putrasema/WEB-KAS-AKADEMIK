@@ -1,7 +1,7 @@
 <?php
 /**
  * Project: Academic Cash System
- * Root redirection to public entry point.
+ * Root redirection to public folder.
  */
-header("Location: public/index.php");
+header("Location: public/");
 exit();
